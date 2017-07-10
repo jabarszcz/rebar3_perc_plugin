@@ -1,0 +1,16 @@
+{application, rebar3_perc_plugin,
+ [{description, "Compile perc codecs with rebar"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {applications,
+   [kernel,
+    stdlib,
+    perc
+   ]},
+  {env,[]},
+  {modules, [rebar3_perc_plugin]},
+
+  {maintainers, []},
+  {licenses, ["MIT"]},
+  {links, []}
+ ]}.
