@@ -2,12 +2,13 @@
 
 -export([init/1, do/1, format_error/1]).
 
--define(PROVIDER, rebar3_perc_plugin).
+-define(PROVIDER, perc).
 -define(DEPS, [app_discovery]).
 
 %% ===================================================================
 %% Public API
 %% ===================================================================
+
 -spec init(rebar_state:t()) -> {ok, rebar_state:t()}.
 init(State) ->
     Provider =
@@ -26,8 +27,52 @@ init(State) ->
 
 -spec do(rebar_state:t()) -> {ok, rebar_state:t()} | {error, string()}.
 do(State) ->
+    Apps =
+        case rebar_state:current_app(State) of
+            undefined ->
+                rebar_state:project_apps(State);
+            AppInfo ->
+                [AppInfo]
+        end,
+    [compile_app(App) || App <- Apps],
     {ok, State}.
 
 -spec format_error(any()) ->  iolist().
 format_error(Reason) ->
     io_lib:format("~p", [Reason]).
+
+%% ===================================================================
+%% Public API
+%% ===================================================================
+
+-spec compile_app(rebar_app_info:t()) -> ok | no_return().
+compile_app(AppInfo) ->
+    Opts = rebar_app_info:opts(AppInfo),
+    Dir = rebar_app_info:dir(AppInfo),
+    BinDir = rebar_app_info:ebin_dir(AppInfo),
+    PercOpts = rebar_opts:get(Opts, perc_opts, []),
+    Compile =
+        case proplists:lookup(compile, PercOpts) of
+            none -> true;
+            _ -> proplists:get_bool(compile, PercOpts)
+        end,
+    InDir =
+        filename:join(
+          Dir,
+          proplists:get_value(in_dir, PercOpts, "include")
+         ),
+    ErlDir =
+        filename:join(
+          BinDir,
+          proplists:get_value(erl_dir, PercOpts, ".")
+         ),
+    CppDir =
+        proplists:get_value(cpp_dir, PercOpts, "priv"),
+   NewPercOpts =
+        [{compile, Compile},
+         {in_dir, InDir},
+         {cpp_dir, CppDir},
+         {erl_dir, ErlDir},
+         {appname, binary_to_list(rebar_app_info:name(AppInfo))}
+         | PercOpts],
+    perc:generate_codecs(NewPercOpts).
