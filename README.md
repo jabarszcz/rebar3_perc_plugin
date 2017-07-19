@@ -14,13 +14,21 @@ Use
 Add the plugin to your rebar config:
 
     {plugins, [
-        { rebar3_perc_plugin, ".*", {git, "git@host:user/rebar3_perc_plugin.git", {tag, "0.1.0"}}}
+        {rebar3_perc_plugin, ".*",
+            {git, "https://github.com/jabarszcz/rebar3_perc_plugin.git",
+                {branch, "master"}
+            }
+        }
     ]}.
 
-Then just call your plugin directly in an existing application:
+Then also add the pre-compile hook and the configuration options:
 
+    {provider_hooks, [
+        {pre, [{compile, perc}]}
+      ]}.
 
-    $ rebar3 rebar3_perc_plugin
-    ===> Fetching rebar3_perc_plugin
-    ===> Compiling rebar3_perc_plugin
-    <Plugin Output>
+    {perc_opts, [
+        {in, "myrecord.hrl"},
+        {record, "myrecordname"},
+        {erl_out, "encoder"}
+      ]}.
