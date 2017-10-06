@@ -48,31 +48,42 @@ format_error(Reason) ->
 -spec compile_app(rebar_app_info:t()) -> ok | no_return().
 compile_app(AppInfo) ->
     Opts = rebar_app_info:opts(AppInfo),
+    PercOpts = rebar_opts:get(Opts, perc_opts, []),
+    CodecsOpts = proplists:get_value(codecs, PercOpts, []),
+    CodecsOptsNew =
+        case proplists:is_defined(in, PercOpts) of
+            true -> [PercOpts | CodecsOpts];
+            _ -> CodecsOpts
+        end,
+    [compile_codec(AppInfo, O) || O <- CodecsOptsNew],
+    ok.
+
+-spec compile_codec(rebar_app_info:t(), perc:optspec()) -> ok | no_return().
+compile_codec(AppInfo, Opts) ->
     Dir = rebar_app_info:dir(AppInfo),
     BinDir = rebar_app_info:ebin_dir(AppInfo),
-    PercOpts = rebar_opts:get(Opts, perc_opts, []),
     Compile =
-        case proplists:lookup(compile, PercOpts) of
+        case proplists:lookup(compile, Opts) of
             none -> true;
-            _ -> proplists:get_bool(compile, PercOpts)
+            _ -> proplists:get_bool(compile, Opts)
         end,
     InDir =
         filename:join(
           Dir,
-          proplists:get_value(in_dir, PercOpts, "include")
+          proplists:get_value(in_dir, Opts, "include")
          ),
     ErlDir =
         filename:join(
           BinDir,
-          proplists:get_value(erl_dir, PercOpts, ".")
+          proplists:get_value(erl_dir, Opts, ".")
          ),
     CppDir =
-        proplists:get_value(cpp_dir, PercOpts, "priv"),
-   NewPercOpts =
+        proplists:get_value(cpp_dir, Opts, "priv"),
+    NewOpts =
         [{compile, Compile},
          {in_dir, InDir},
          {cpp_dir, CppDir},
          {erl_dir, ErlDir},
          {appname, binary_to_list(rebar_app_info:name(AppInfo))}
-         | PercOpts],
-    perc:generate_codecs(NewPercOpts).
+         | Opts],
+    perc:generate_codecs(NewOpts).
