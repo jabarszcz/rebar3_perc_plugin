@@ -18,7 +18,7 @@ init(State) ->
            {module, ?MODULE},            % The module implementation of the task
            {bare, true},                 % The task can be run by the user
            {deps, ?DEPS},                % The list of dependencies
-           {opts, perc:get_optspec()},   % Options understood by the plugin
+           {opts, perc_opts:optspec()},   % Options understood by the plugin
            {short_desc, "Compile perc codecs with rebar"},
            {desc, "Compile perc codecs with rebar"}
           ]),
@@ -58,7 +58,8 @@ compile_app(AppInfo) ->
     [compile_codec(AppInfo, O) || O <- CodecsOptsNew],
     ok.
 
--spec compile_codec(rebar_app_info:t(), perc:optspec()) -> ok | no_return().
+-spec compile_codec(rebar_app_info:t(), perc_opts:options()) ->
+                           ok | no_return().
 compile_codec(AppInfo, Opts) ->
     Dir = rebar_app_info:dir(AppInfo),
     BinDir = rebar_app_info:ebin_dir(AppInfo),
