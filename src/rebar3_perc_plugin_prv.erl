@@ -18,7 +18,8 @@ init(State) ->
            {module, ?MODULE},            % The module implementation of the task
            {bare, true},                 % The task can be run by the user
            {deps, ?DEPS},                % The list of dependencies
-           {opts, perc_opts:optspec()},   % Options understood by the plugin
+           {opts, perc_opts:optspec_nodefaults()},   % Options understood by
+                                                     % the plugin
            {short_desc, "Compile perc codecs with rebar"},
            {desc, "Compile perc codecs with rebar"}
           ]),
@@ -34,7 +35,8 @@ do(State) ->
             AppInfo ->
                 [AppInfo]
         end,
-    [compile_app(App) || App <- Apps],
+    {Args, _} = rebar_state:command_parsed_args(State),
+    [compile_app(App, Args) || App <- Apps],
     {ok, State}.
 
 -spec format_error(any()) ->  iolist().
@@ -45,8 +47,8 @@ format_error(Reason) ->
 %% Public API
 %% ===================================================================
 
--spec compile_app(rebar_app_info:t()) -> ok | no_return().
-compile_app(AppInfo) ->
+-spec compile_app(rebar_app_info:t(), perc_opts:options()) -> ok | no_return().
+compile_app(AppInfo, GeneralOpts) ->
     Opts = rebar_app_info:opts(AppInfo),
     PercOpts = rebar_opts:get(Opts, perc_opts, []),
     CodecsOpts = proplists:get_value(codecs, PercOpts, []),
@@ -55,7 +57,7 @@ compile_app(AppInfo) ->
             true -> [PercOpts | CodecsOpts];
             _ -> CodecsOpts
         end,
-    [compile_codec(AppInfo, O) || O <- CodecsOptsNew],
+    [compile_codec(AppInfo, GeneralOpts ++ O) || O <- CodecsOptsNew],
     ok.
 
 -spec compile_codec(rebar_app_info:t(), perc_opts:options()) ->
