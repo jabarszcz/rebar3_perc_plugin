@@ -83,10 +83,11 @@ compile_codec(AppInfo, Opts) ->
     CppDir =
         proplists:get_value(cpp_dir, Opts, "priv"),
     NewOpts =
+        Opts ++
         [{compile, Compile},
          {in_dir, InDir},
          {cpp_dir, CppDir},
          {erl_dir, ErlDir},
          {appname, binary_to_list(rebar_app_info:name(AppInfo))}
-         | Opts],
+        ],
     perc:generate_codecs(NewOpts).
