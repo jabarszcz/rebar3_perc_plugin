@@ -65,29 +65,17 @@ compile_app(AppInfo, GeneralOpts) ->
 compile_codec(AppInfo, Opts) ->
     Dir = rebar_app_info:dir(AppInfo),
     BinDir = rebar_app_info:ebin_dir(AppInfo),
-    Compile =
-        case proplists:lookup(compile, Opts) of
-            none -> true;
-            _ -> proplists:get_bool(compile, Opts)
-        end,
-    InDir =
-        filename:join(
-          Dir,
-          proplists:get_value(in_dir, Opts, "include")
-         ),
-    ErlDir =
-        filename:join(
-          BinDir,
-          proplists:get_value(erl_dir, Opts, ".")
-         ),
-    CppDir =
-        proplists:get_value(cpp_dir, Opts, "priv"),
+    So = proplists:get_value(so, Opts, filename:join(Dir, "./priv/")),
     NewOpts =
-        Opts ++
-        [{compile, Compile},
-         {in_dir, InDir},
-         {cpp_dir, CppDir},
-         {erl_dir, ErlDir},
-         {appname, binary_to_list(rebar_app_info:name(AppInfo))}
+        [case O of
+             {beam, Beam} ->
+                 %% Beam path relative to ebin dir
+                 {beam, filename:join(BinDir, Beam)};
+             Other ->
+                 Other
+         end || O <- Opts] ++
+        [{so, So},
+         {appname, binary_to_atom(rebar_app_info:name(AppInfo), latin1)},
+         {lib_dir, Dir}
         ],
-    perc:generate_codecs(NewOpts).
+    ok = perc:generate_codecs(NewOpts).
