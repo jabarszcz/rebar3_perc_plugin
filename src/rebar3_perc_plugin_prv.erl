@@ -63,9 +63,9 @@ compile_app(AppInfo, GeneralOpts) ->
 -spec compile_codec(rebar_app_info:t(), perc_opts:options()) ->
                            ok | no_return().
 compile_codec(AppInfo, Opts) ->
-    Dir = rebar_app_info:dir(AppInfo),
+    OutDir = rebar_app_info:out_dir(AppInfo),
     BinDir = rebar_app_info:ebin_dir(AppInfo),
-    So = proplists:get_value(so, Opts, filename:join(Dir, "./priv/")),
+    So = proplists:get_value(so, Opts, "priv/"),
     NewOpts =
         [case O of
              {beam, Beam} ->
@@ -76,6 +76,6 @@ compile_codec(AppInfo, Opts) ->
          end || O <- Opts] ++
         [{so, So},
          {appname, binary_to_atom(rebar_app_info:name(AppInfo), latin1)},
-         {lib_dir, Dir}
+         {lib_dir, OutDir}
         ],
     ok = perc:generate_codecs(NewOpts).
